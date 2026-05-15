@@ -17,7 +17,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://*.neon.tech https://*.stack-auth.com wss://*.stack-auth.com https://*.stackframe.co",
+      "connect-src 'self' https://*.neon.tech https://*.neonauth.com wss://*.neon.tech",
     ].join("; "),
   },
 ];
