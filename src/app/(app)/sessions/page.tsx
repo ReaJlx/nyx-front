@@ -1,6 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/server";
 
-export default function SessionsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SessionsPage() {
+  const { data: session } = await auth.getSession();
+  if (!session?.session) redirect("/sign-in");
   return (
     <div
       style={{

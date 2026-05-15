@@ -1,10 +1,35 @@
 "use client";
-import { useActionState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signInWithEmail } from "./actions";
+import { authClient } from "@/lib/auth/client";
 
 export default function SignInPage() {
-  const [state, formAction, isPending] = useActionState(signInWithEmail, null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+    setError(null);
+    setIsPending(true);
+    try {
+      const { error: err } = await authClient.signIn.email({ email, password });
+      if (err) {
+        setError(err.message || "Failed to sign in. Try again.");
+      } else {
+        router.push("/sessions");
+        router.refresh();
+      }
+    } catch {
+      setError("Failed to sign in. Try again.");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <div
@@ -52,12 +77,9 @@ export default function SignInPage() {
         </div>
       </div>
 
-      <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label
-            htmlFor="email"
-            style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}
-          >
+          <label htmlFor="email" style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}>
             EMAIL
           </label>
           <input
@@ -78,10 +100,7 @@ export default function SignInPage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label
-            htmlFor="password"
-            style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}
-          >
+          <label htmlFor="password" style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}>
             PASSWORD
           </label>
           <input
@@ -101,7 +120,7 @@ export default function SignInPage() {
           />
         </div>
 
-        {state?.error && (
+        {error && (
           <div
             style={{
               padding: "8px 12px",
@@ -112,7 +131,7 @@ export default function SignInPage() {
               fontSize: 12.5,
             }}
           >
-            {state.error}
+            {error}
           </div>
         )}
 

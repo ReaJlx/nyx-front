@@ -1,10 +1,36 @@
 "use client";
-import { useActionState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUpWithEmail } from "./actions";
+import { authClient } from "@/lib/auth/client";
 
 export default function SignUpPage() {
-  const [state, formAction, isPending] = useActionState(signUpWithEmail, null);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const name = (form.elements.namedItem("name") as HTMLInputElement).value || email.split("@")[0];
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+    setError(null);
+    setIsPending(true);
+    try {
+      const { error: err } = await authClient.signUp.email({ email, name, password });
+      if (err) {
+        setError(err.message || "Failed to create account.");
+      } else {
+        router.push("/sessions");
+        router.refresh();
+      }
+    } catch {
+      setError("Failed to create account.");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <div
@@ -51,12 +77,9 @@ export default function SignUpPage() {
         </div>
       </div>
 
-      <form action={formAction} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label
-            htmlFor="name"
-            style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}
-          >
+          <label htmlFor="name" style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}>
             NAME
           </label>
           <input
@@ -76,10 +99,7 @@ export default function SignUpPage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label
-            htmlFor="email"
-            style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}
-          >
+          <label htmlFor="email" style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}>
             EMAIL
           </label>
           <input
@@ -100,10 +120,7 @@ export default function SignUpPage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label
-            htmlFor="password"
-            style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}
-          >
+          <label htmlFor="password" style={{ fontSize: 12, color: "var(--text-2)", fontFamily: "var(--mono)" }}>
             PASSWORD
           </label>
           <input
@@ -123,7 +140,7 @@ export default function SignUpPage() {
           />
         </div>
 
-        {state?.error && (
+        {error && (
           <div
             style={{
               padding: "8px 12px",
@@ -134,7 +151,7 @@ export default function SignUpPage() {
               fontSize: 12.5,
             }}
           >
-            {state.error}
+            {error}
           </div>
         )}
 
